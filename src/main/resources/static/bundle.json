@@ -1,0 +1,14 @@
+{
+  "applications": [
+    {
+      "type": "sandbox",
+      "id": "trade-buddy-bot",
+      "name": "Trade Buddy",
+      "description": "Required to display messages from the TradeBuddy bot",
+      "publisher": "Symphony Platform Solutions",
+      "url": "https://localhost:4000/controller.html",
+      "icon": "https://localhost:4000/img/icon.png",
+      "domain": "localhost"
+    }
+  ]
+}
