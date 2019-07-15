@@ -29,6 +29,11 @@ public class WebController {
         return "For development purposes, inject the app bundle via https://[your-pod].symphony.com/client/index.html?bundle=https://localhost:4000/bundle.json";
     }
 
+    @GetMapping("/healthz")
+    public String getHealth() {
+        return "OK";
+    }
+
     @GetMapping("/appToken")
     public String getAppToken() {
         if (appAuth == null) {
