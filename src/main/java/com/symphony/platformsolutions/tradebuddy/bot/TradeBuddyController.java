@@ -24,7 +24,7 @@ public class TradeBuddyController {
     private IEXClient iexClient;
     private static List<WatchlistItem> watchlist;
     private static final String IEX_URL = "https://cloud.iexapis.com/v1";
-    private static final String IEX_TOKEN = "sk_3a4a3a012eca49c393551bbff75c5e5c";
+    private static final String IEX_TOKEN = "<iex_api_key>";
 
     public TradeBuddyController() {
         this.iexClient = Feign.builder()
