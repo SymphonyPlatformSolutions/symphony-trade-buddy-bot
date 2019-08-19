@@ -34,6 +34,8 @@ commands:
             sed -i -e "s/localhost:4000/${BASE_URL}/g" js/controller.js
             sed -i -e "s/localhost:4000/${BASE_URL}/g" bundle.json
             sed -i -e "s/localhost/${DOMAIN}/g" bundle.json
+            cd ../../java/com/symphony/platformsolutions/tradebuddy/bot/
+            sed -i -e "s/<iex_api_key>/${IEX_KEY}/g" TradeBuddyController.java
 
   build_docker_image:
     description: Build a Docker image
