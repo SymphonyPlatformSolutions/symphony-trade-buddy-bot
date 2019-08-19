@@ -3,6 +3,8 @@ This bot tracks watchlists for multiple users and displays a table with clickabl
 
 ![](trade-buddy-bot.gif)
 
+Note that this example uses IEX's APIs for pricing data so you will need to sign up for a developer account with IEX.
+
 ## Configuration
 ### Add Application into AC Portal
 1. Go to AC Portal > App Management
@@ -51,6 +53,11 @@ const appId = 'trade-buddy-bot';
 const backendUrl = 'https://localhost:4000';
 ````
 
+##### src/main/java/com/symphony/platformsolutions/tradebuddy/bot/TradeBuddyController.java
+* If you don't already have an IEX account, go to https://iexcloud.io and sign up
+* Go to the console page, under API Tokens and copy the secret token
+* Insert the token into the IEX_TOKEN variable
+
 ### Development Testing
 1. Refresh maven dependencies and run/debug the Spring Boot project
 2. Head to https://[your-pod].symphony.com/client/index.html?bundle=https://localhost:4000/bundle.json
@@ -61,3 +68,4 @@ const backendUrl = 'https://localhost:4000';
 ### Disclaimer
 * This project was created to demonstrate the capabilities of an extension app performing native custom rendering while integrating with the REST API to perform administrative functions like room management
 * It does not have a persistence layer so the watchlist data is lost once the bot shuts down and as such, is not recommended for production use as-is
+* If you use the IEX APIs as-is, you are bound by IEX's [API Terms](https://iextrading.com/api-terms/) and [Attribution Requirement](https://iextrading.com/developer/docs/#attribution) for redistribution of their data
