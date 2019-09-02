@@ -13,14 +13,14 @@ let appTokenPromise = fetch(`${backendUrl}/appToken`)
         appToken = token;
     });
 
-Promise.all([ appTokenPromise, SYMPHONY.remote.hello()]).then(data => {
+Promise.all([ appTokenPromise, SYMPHONY.remote.hello()]).then(function() {
     SYMPHONY.application
     .register(
         { appId: appId, tokenA: appToken },
         [ 'entity', 'extended-user-info' ],
         [ tradeBuddyName ]
     )
-    .then(function(response) {
+    .then(function() {
         const entityService = SYMPHONY.services.subscribe('entity');
         entityService.registerRenderer('com.symphony.ps.watchlist', {}, tradeBuddyName);
 
@@ -55,14 +55,17 @@ Promise.all([ appTokenPromise, SYMPHONY.remote.hello()]).then(data => {
                 });
 
                 const dataItems = entityData['watchlist']
-                    .map(item => `
-                        <tr>
-                            <td style="padding-bottom: 5px"><cashtag id="cashtag-${item['symbol']}" /></td>
-                            <td>${item['companyName']}</td>
+                    .map(item => {
+                        const escapedCompanyName = item['companyName'].replace(/&/g, '&amp;');
+                        const escapedSymbol = item['symbol'].replace(/&/g, '&amp;');
+                        return `<tr>
+                            <td style="padding-bottom: 5px"><cashtag id="cashtag-${escapedSymbol}" /></td>
+                            <td>${escapedCompanyName}</td>
                             <td>${item['latestPrice']}</td>
                             <td>${this.getChangeEmoji(item['change'])} ${this.formatChangeText(item['change'])}</td>
                             <td><action class="button medium" id="${item['symbol']}" /></td>
-                        </tr>`)
+                        </tr>`
+                    })
                     .join('');
 
                 let template = `
@@ -74,7 +77,7 @@ Promise.all([ appTokenPromise, SYMPHONY.remote.hello()]).then(data => {
                             </tr>
                             ${dataItems}
                         </table>
-                    </entity>`.replace(/ & /g, ' &amp; ');
+                    </entity>`;
                 return JSON.parse(JSON.stringify({ data, template, entityInstanceId }));
             },
             getChangeEmoji: function(change) {
