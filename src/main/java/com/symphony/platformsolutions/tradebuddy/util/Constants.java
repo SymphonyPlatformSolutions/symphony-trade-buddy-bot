@@ -3,7 +3,7 @@ package com.symphony.platformsolutions.tradebuddy.util;
 public class Constants {
     public static final String HELP_TEXT_IM = "Usage:<ul><li><b>/watch <cash tag=\"ticker\" /></b>: add a ticker to your watchlist</li><li><b>/unwatch <cash tag=\"ticker\" /></b>: remove a ticker from your watchlist</li><li><b>/watchlist</b>: display your watchlist</li></ul>";
     public static final String HELP_TEXT_ROOM = "Usage:<ul><li><b>/watch <cash tag=\"ticker\" /></b>: add a ticker to your watchlist</li><li><b>/unwatch <cash tag=\"ticker\" /></b>: remove a ticker from your watchlist</li><li><b>/watchlist</b>: display your watchlist</li><li><b>/price</b>: gets the current price for this room's ticker</li><li><b>/news</b>: gets the latest news for this room's ticker</li></ul>";
-    public static final String SPECIFY_ONE_CASHTAG = "Hi <mention uid=\"%d\" />, please specify 1 <cash tag=\"cashtag\" />";
+    public static final String SPECIFY_ONE_CASHTAG = "Hi <mention uid=\"%d\" />, please specify at least 1 <cash tag=\"cashtag\" />";
     public static final String WATCHLIST_EXISTS = "Hi <mention uid=\"%d\"/>, <cash tag=\"%s\"/> is already on your watchlist";
     public static final String WATCHLIST_EXISTS_LOG = "Watchlist item {} already exists for {}";
     public static final String WATCHLIST_ADDED = "Hi <mention uid=\"%d\"/>, added %s (<cash tag=\"%s\"/>) to your watchlist";

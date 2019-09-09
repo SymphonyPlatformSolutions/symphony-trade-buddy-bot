@@ -63,12 +63,12 @@ public class TradeBuddyController {
             case "watch":
                 if (isCashtagsInvalid(streamId, userId, cashtags))
                     break;
-                addToWatchlist(streamId, userId, cashtags.get(0));
+                addToWatchlist(streamId, userId, cashtags);
                 break;
             case "unwatch":
                 if (isCashtagsInvalid(streamId, userId, cashtags))
                     break;
-                removeFromWatchlist(streamId, userId, cashtags.get(0));
+                removeFromWatchlist(streamId, userId, cashtags);
                 break;
             case "news":
                 if (!inMsg.getStream().getStreamType().equals("IM")) {
@@ -112,11 +112,15 @@ public class TradeBuddyController {
     }
 
     private boolean isCashtagsInvalid(String streamId, long userId, List<String> cashtags) {
-        if (cashtags.size() != 1) {
+        if (cashtags.size() < 1) {
             sendMessage(streamId, String.format(SPECIFY_ONE_CASHTAG, userId));
             return true;
         }
         return false;
+    }
+
+    private void addToWatchlist(String streamId, long userId, List<String> symbols) {
+        symbols.forEach(symbol -> addToWatchlist(streamId, userId, symbol));
     }
 
     private void addToWatchlist(String streamId, long userId, String symbol) {
@@ -135,6 +139,10 @@ public class TradeBuddyController {
             sendMessage(streamId, String.format(INVALID_SYMBOL, userId, symbol));
             log.info(INVALID_SYMBOL_LOG, symbol, userId);
         }
+    }
+
+    private void removeFromWatchlist(String streamId, long userId, List<String> symbols) {
+        symbols.forEach(symbol -> removeFromWatchlist(streamId, userId, symbol));
     }
 
     private void removeFromWatchlist(String streamId, long userId, String symbol) {
