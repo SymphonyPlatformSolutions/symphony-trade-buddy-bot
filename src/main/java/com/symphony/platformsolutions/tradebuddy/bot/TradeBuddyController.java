@@ -49,37 +49,37 @@ public class TradeBuddyController {
         }
         List<String> cashtags = inMsg.getCashtags();
 
-        if (inMsg.getStream().getStreamType().equals("IM")) {
-            switch (command) {
-                case "help":
+        switch (command) {
+            case "help":
+                if (inMsg.getStream().getStreamType().equals("IM")) {
                     sendMessage(streamId, HELP_TEXT_IM);
-                    break;
-                case "watchlist":
-                    showWatchlist(streamId, userId, userDisplayName);
-                    break;
-                case "watch":
-                    if (isCashtagsInvalid(streamId, userId, cashtags))
-                        break;
-                    addToWatchlist(streamId, userId, cashtags.get(0));
-                    break;
-                case "unwatch":
-                    if (isCashtagsInvalid(streamId, userId, cashtags))
-                        break;
-                    removeFromWatchlist(streamId, userId, cashtags.get(0));
-                    break;
-            }
-        } else {
-            switch (command) {
-                case "help":
+                } else {
                     sendMessage(streamId, HELP_TEXT_ROOM);
+                }
+                break;
+            case "watchlist":
+                showWatchlist(streamId, userId, userDisplayName);
+                break;
+            case "watch":
+                if (isCashtagsInvalid(streamId, userId, cashtags))
                     break;
-                case "news":
+                addToWatchlist(streamId, userId, cashtags.get(0));
+                break;
+            case "unwatch":
+                if (isCashtagsInvalid(streamId, userId, cashtags))
+                    break;
+                removeFromWatchlist(streamId, userId, cashtags.get(0));
+                break;
+            case "news":
+                if (!inMsg.getStream().getStreamType().equals("IM")) {
                     showNews(streamId);
-                    break;
-                case "price":
+                }
+                break;
+            case "price":
+                if (!inMsg.getStream().getStreamType().equals("IM")) {
                     showPrice(streamId);
-                    break;
-            }
+                }
+                break;
         }
     }
 
@@ -104,9 +104,8 @@ public class TradeBuddyController {
             dataDto.setUserDisplayName(userDisplayName);
             dataDto.setWatchlist(quotes);
             String dtoString = mapper.writeValueAsString(new WatchlistWrapperDTO(dataDto));
-            String response = String.format(WATCHLIST_TEXT, userId);
 
-            sendMessage(streamId, response, dtoString);
+            sendMessage(streamId, WATCHLIST_TEXT, dtoString);
         } catch (JsonProcessingException e) {
             log.error("JSON Encoding Error", e);
         }
@@ -153,7 +152,7 @@ public class TradeBuddyController {
     private void showNews(String streamId) {
         String symbol = getSymbolFromRoomName(streamId);
         if (symbol == null) {
-            sendMessage(streamId, "Cannot find symbol to search for news on");
+            sendMessage(streamId, "This is not a trade discussion room");
             return;
         }
 
@@ -167,7 +166,7 @@ public class TradeBuddyController {
     private void showPrice(String streamId) {
         String symbol = getSymbolFromRoomName(streamId);
         if (symbol == null) {
-            sendMessage(streamId, "Cannot find symbol to search for price on");
+            sendMessage(streamId, "This is not a trade discussion room");
             return;
         }
 
