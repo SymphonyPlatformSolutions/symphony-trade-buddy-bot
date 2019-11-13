@@ -20,7 +20,7 @@ public class TradeBuddyBot {
         SpringApplication.run(TradeBuddyBot.class, args);
     }
 
-    public TradeBuddyBot(IMListenerImpl imListener, RoomListenerImpl roomListener) {
+    public TradeBuddyBot(IMListenerImpl imListener, RoomListenerImpl roomListener) throws Exception {
         botClient = SymBotClient.initBotRsa("config.json");
         botClient.getDatafeedEventsService().addListeners(imListener, roomListener);
     }
