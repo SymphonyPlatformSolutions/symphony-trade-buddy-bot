@@ -1,0 +1,68 @@
+id: watchlist
+variables:
+  uri: https://www.alphavantage.co/query?function=GLOBAL_QUOTE
+  token:
+  index: 0
+activities:
+  - execute-script:
+      id: init
+      on:
+        message-received:
+          content: /watchlist
+      script: |
+        variables.watchlist = System.properties[event.initiator.user.userId] ?: []
+
+  - send-message:
+      id: pending
+      content: |
+        <#if ${variables.watchlist.size() == 0}>
+          Hi <mention uid="${event.initiator.user.userId}"/>,
+          there are no items in your watchlist. Use <b>/watch <cash tag="ticker"/></b> to get started.
+        <#else>
+          Loading prices..
+        </#if>
+
+  - execute-request:
+      id: getPrice
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: pending
+              if: ${variables.watchlist.size() > 0}
+          - activity-completed:
+              activity-id: collate
+              if: ${variables.index < variables.watchlist.size()}
+      url: ${variables.uri}&apikey=${variables.token}&symbol=${variables.watchlist[variables.index].ticker}
+
+  - execute-script:
+      id: collate
+      script: |
+        data = getPrice.outputs.body['Global Quote']
+        if (data) {
+          variables.watchlist[variables.index].price = data['05. price']
+          variables.watchlist[variables.index].change = data['10. change percent']
+        }
+        variables.index++
+
+  - update-message:
+      id: ack
+      message-id: ${pending.outputs.message.messageId}
+      content: |
+        <#assign watchlist = ${variables.watchlist}>
+        <b>Watchlist for <mention uid="${event.initiator.user.userId}"/></b>
+        <form id="trade-discuss" multi-submit="reset">
+          <table>
+            <tr>
+              <th>Ticker</th><th>Company</th><th>Price</th><th>Change</th><th>Discuss</th>
+            </tr>
+            <#list watchlist as entry>
+              <tr>
+                <td><cash tag="\${entry.ticker}" /></td>
+                <td>\${entry.name}</td>
+                <td>\${entry.price}</td>
+                <td>\${entry.change}</td>
+                <td><button name="discuss-\${entry.ticker}">Discuss \${entry.ticker}</button></td>
+              </tr>
+            </#list>
+          </table>
+        </form>
