@@ -1,5 +1,14 @@
-FROM openjdk:8-jdk-alpine
+FROM amazoncorretto:17
+RUN jlink \
+    --add-modules java.base,java.compiler,java.desktop,java.instrument,java.prefs,java.rmi,java.scripting,java.security.jgss,java.security.sasl,java.sql.rowset,jdk.attach,jdk.httpserver,jdk.jdi,jdk.jfr,jdk.management,jdk.net,jdk.unsupported,jdk.crypto.ec \
+    --strip-java-debug-attributes \
+    --no-man-pages \
+    --no-header-files \
+    --compress=2 \
+    --output /jre
+FROM gcr.io/distroless/java-base-debian11
+COPY --from=0 /jre /jre
 WORKDIR /data/symphony
-COPY ./target/*.jar bot.jar
-COPY internal_truststore internal_truststore
-ENTRYPOINT [ "java", "-jar", "./bot.jar" ]
+COPY workflows workflows
+COPY workflow-bot-app.jar .
+ENTRYPOINT [ "/jre/bin/java", "-jar", "workflow-bot-app.jar" ]
