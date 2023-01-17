@@ -1,0 +1,16 @@
+id: remove-watch
+activities:
+  - execute-script:
+      id: init
+      on:
+        message-received:
+          content: /unwatch \${ticker}
+      script: |
+        userId = event.initiator.user.userId
+        System.properties[userId] = System.properties[userId].findAll { it.ticker != event.args.ticker }
+
+  - send-message:
+      id: ack
+      content: |
+        Hi <mention uid="${event.initiator.user.userId}"/>,
+        removed (<cash tag="${event.args.ticker}"/>) from your watchlist

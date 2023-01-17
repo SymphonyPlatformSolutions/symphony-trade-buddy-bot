@@ -2,3 +2,4 @@ rsa
 build
 *.jar
 .gradle
+.idea
