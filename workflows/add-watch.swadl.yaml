@@ -9,8 +9,9 @@ activities:
         message-received:
           content: /watch \${ticker}
       script: |
+        variables.ticker = event.args.ticker.toUpperCase()
         watchlist = System.properties[event.initiator.user.userId] ?: []
-        variables.proceed = watchlist.findAll { it.ticker == event.args.ticker }.size() == 0
+        variables.proceed = watchlist.findAll { it.ticker == variables.ticker }.size() == 0
 
   - send-message:
       id: duplicate
@@ -18,7 +19,7 @@ activities:
         activity-completed:
           activity-id: init
           if: ${!variables.proceed}
-      content: The ticker <cash tag="${event.args.ticker}"/> is already in your watchlist
+      content: The ticker <cash tag="${variables.ticker}"/> is already in your watchlist
 
   - execute-request:
       id: check
@@ -26,7 +27,7 @@ activities:
         activity-completed:
           activity-id: init
           if: ${variables.proceed}
-      url: ${variables.uri}&apikey=${variables.token}&symbol=${event.args.ticker}
+      url: ${variables.uri}&apikey=${variables.token}&symbol=${variables.ticker}
 
   - execute-script:
       id: process
@@ -34,7 +35,7 @@ activities:
         if (check.outputs.body.Name) {
           userId = event.initiator.user.userId
           watchlist = System.properties[userId] ?: []
-          watchlist.add([ name: check.outputs.body.Name, ticker: event.args.ticker ])
+          watchlist.add([ name: check.outputs.body.Name, ticker: variables.ticker ])
           System.properties[userId] = watchlist
         }
 
@@ -44,7 +45,7 @@ activities:
         <#assign data = ${check.outputs.body}>
         Hi <mention uid="${event.initiator.user.userId}"/>,
         <#if data.Name??>
-          added <b>\${data.Name}</b> (<cash tag="${event.args.ticker}"/>) to your watchlist
+          added <b>\${data.Name}</b> (<cash tag="${variables.ticker}"/>) to your watchlist
         <#else>
-          no security found for ticker <cash tag="${event.args.ticker}"/>
+          no security found for ticker <cash tag="${variables.ticker}"/>
         </#if>
