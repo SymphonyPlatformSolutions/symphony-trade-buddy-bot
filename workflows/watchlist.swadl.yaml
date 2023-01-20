@@ -61,7 +61,12 @@ activities:
                 <td>\${entry.name}</td>
                 <td>\${entry.price}</td>
                 <td>\${entry.change}</td>
-                <td><button name="discuss-\${entry.ticker}">Discuss \${entry.ticker}</button></td>
+                <td>
+                  <div style="display:none">
+                    <text-field name="\${entry.ticker}">\${entry.name}</text-field>
+                  </div>
+                  <button name="discuss-\${entry.ticker}">Discuss \${entry.ticker}</button>
+                </td>
               </tr>
             </#list>
           </table>

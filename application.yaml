@@ -3,3 +3,15 @@ bdk:
   bot:
     username: trade-buddy
     privateKey.path: rsa/privatekey.pem
+
+logging.level:
+  org:
+    springframework: error
+    apache: error
+  com:
+    symphony: info
+    symphony.bdk:
+      workflow:
+        swadl: error
+        engine.executor.DebugExecutor: debug
+    zaxxer: error

@@ -1,0 +1,57 @@
+id: discuss
+activities:
+  - execute-script:
+      id: init
+      on:
+        form-replied:
+          id: initEvent
+          form-id: trade-discuss
+      script: |
+        variables.ticker = event.source.formValues.action.substring(8)
+        variables.name = event.source.formValues[variables.ticker]
+        variables.roomName = "Trade: \$${variables.ticker} ${variables.name}"
+
+  - get-rooms:
+      id: searchExistingRooms
+      query: ${variables.roomName}
+      active: true
+      owner-id: ${session().id}
+
+  - execute-script:
+      id: process
+      script: |
+        result = searchExistingRooms.outputs.rooms.rooms.findAll { it.roomAttributes.name.toLowerCase() == variables.roomName.toLowerCase() }
+        variables.roomId = result.size() > 0 ? result[0].roomSystemInfo.id : null
+
+  - create-room:
+      id: createRoom
+      on:
+        activity-completed:
+          activity-id: process
+      if: ${variables.roomId == null}
+      room-name: ${variables.roomName}
+      room-description: ${variables.roomName}
+      public: true
+
+  - execute-script:
+      id: setNewRoomId
+      script: variables.roomId = createRoom.outputs.roomId
+
+  - add-room-member:
+      id: addToRoom
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: process
+              if: ${variables.roomId != null}
+          - activity-completed:
+              activity-id: setNewRoomId
+      stream-id: ${variables.roomId}
+      user-ids:
+        - ${initEvent.initiator.user.userId}
+
+  - send-message:
+      id: welcome
+      to:
+        stream-id: ${variables.roomId}
+      content: Welcome <mention uid="${initEvent.initiator.user.userId}" />!
