@@ -1,8 +1,7 @@
 id: watchlist
 variables:
-  uri: https://www.alphavantage.co/query?function=GLOBAL_QUOTE
+  uri: https://api.iex.cloud/v1/data/core/quote/
   token:
-  index: 0
 activities:
   - execute-script:
       id: init
@@ -10,62 +9,54 @@ activities:
         message-received:
           content: /watchlist
       script: |
-        variables.watchlist = System.properties[event.initiator.user.userId] ?: []
+        variables.data = System.properties[event.initiator.user.userId] ?: []
+        variables.watchlist = variables.data.join(",")
 
   - send-message:
-      id: pending
+      id: empty
+      on:
+        activity-completed:
+          activity-id: init
+          if: ${variables.data.size() == 0}
       content: |
-        <#if ${variables.watchlist.size() == 0}>
-          Hi <mention uid="${event.initiator.user.userId}"/>,
-          there are no items in your watchlist. Use <b>/watch <cash tag="ticker"/></b> to get started.
-        <#else>
-          Loading prices..
-        </#if>
+        Hi <mention uid="${event.initiator.user.userId}"/>,
+        there are no items in your watchlist. Use <b>/watch <cash tag="ticker"/></b> to get started.
 
   - execute-request:
       id: getPrice
       on:
-        one-of:
-          - activity-completed:
-              activity-id: pending
-              if: ${variables.watchlist.size() > 0}
-          - activity-completed:
-              activity-id: collate
-              if: ${variables.index < variables.watchlist.size()}
-      url: ${variables.uri}&apikey=${variables.token}&symbol=${variables.watchlist[variables.index].ticker}
+        activity-completed:
+          activity-id: init
+      url: ${variables.uri}${variables.watchlist}?token=${variables.token}
 
   - execute-script:
-      id: collate
+      id: process
       script: |
-        data = getPrice.outputs.body['Global Quote']
-        if (data) {
-          variables.watchlist[variables.index].price = data['05. price']
-          variables.watchlist[variables.index].change = data['10. change percent']
-        }
-        variables.index++
+        variables.data = wdk.json(getPrice.outputs.body).collect {
+          [ symbol: it.symbol, name: it.companyName, price: it.latestPrice, change: it.change ]
+        }.sort { it.symbol }
 
-  - update-message:
+  - send-message:
       id: ack
-      message-id: ${pending.outputs.message.messageId}
       content: |
-        <#assign watchlist = ${variables.watchlist}>
+        <#assign data = ${variables.data}>
         <b>Watchlist for <mention uid="${event.initiator.user.userId}"/></b>
         <form id="trade-discuss" multi-submit="reset">
           <table>
             <tr>
               <th>Ticker</th><th>Company</th><th>Price</th><th>Change</th><th>Discuss</th>
             </tr>
-            <#list watchlist as entry>
+            <#list data as entry>
               <tr>
-                <td><cash tag="\${entry.ticker}" /></td>
+                <td><cash tag="\${entry.symbol}" /></td>
                 <td>\${entry.name}</td>
                 <td>\${entry.price}</td>
                 <td>\${entry.change}</td>
                 <td>
                   <div style="display:none">
-                    <text-field name="\${entry.ticker}">\${entry.name}</text-field>
+                    <text-field name="\${entry.symbol}">\${entry.name}</text-field>
                   </div>
-                  <button name="discuss-\${entry.ticker}">Discuss \${entry.ticker}</button>
+                  <button name="discuss-\${entry.symbol}">Discuss \${entry.symbol}</button>
                 </td>
               </tr>
             </#list>
