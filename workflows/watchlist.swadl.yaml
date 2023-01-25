@@ -1,7 +1,7 @@
 id: watchlist
 variables:
   uri: https://api.iex.cloud/v1/data/core/quote/
-  token:
+  token: {{IEX_TOKEN}}
 activities:
   - execute-script:
       id: init

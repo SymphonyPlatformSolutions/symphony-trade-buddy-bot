@@ -1,7 +1,7 @@
 id: news
 variables:
   uri: https://api.iex.cloud/v1/data/core/news/
-  token:
+  token: {{IEX_TOKEN}}
 activities:
   - get-room:
       id: init

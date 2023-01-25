@@ -6,9 +6,13 @@ RUN jlink \
     --no-header-files \
     --compress=2 \
     --output /jre
-FROM gcr.io/distroless/java-base-debian11
+
+FROM debian:bullseye-slim
 COPY --from=0 /jre /jre
 WORKDIR /data/symphony
 COPY workflows workflows
-COPY workflow-bot-app.jar .
-ENTRYPOINT [ "/jre/bin/java", "-jar", "workflow-bot-app.jar" ]
+COPY workflow-bot-app.jar app.jar
+ENTRYPOINT [ \
+  "/bin/sh", "-c", \
+  "sed -i \"s/{{IEX_TOKEN}}/$TOKEN/g\" workflows/*.swadl.yaml && /jre/bin/java -jar app.jar" \
+]

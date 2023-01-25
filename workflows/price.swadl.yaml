@@ -1,7 +1,7 @@
 id: price
 variables:
   uri: https://api.iex.cloud/v1/data/core/quote/
-  token:
+  token: {{IEX_TOKEN}}
 activities:
   - get-room:
       id: init
