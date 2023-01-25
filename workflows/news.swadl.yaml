@@ -1,0 +1,41 @@
+id: news
+variables:
+  uri: https://api.iex.cloud/v1/data/core/news/
+  token:
+activities:
+  - get-room:
+      id: init
+      on:
+        message-received:
+          content: /news
+      if: ${event.source.message.stream.streamType == 'ROOM'}
+      stream-id: ${event.source.message.stream.streamId}
+
+  - execute-script:
+      id: extractTicker
+      on:
+        activity-completed:
+          activity-id: init
+          if: ${init.outputs.room.roomAttributes.name.indexOf("Trade") == 0}
+      script: variables.ticker = (init.outputs.room.roomAttributes.name =~ /\$(\w+)/)[0][1]
+
+  - execute-request:
+      id: getNews
+      url: ${variables.uri}${variables.ticker}?token=${variables.token}&last=5
+
+  - execute-script:
+      id: process
+      script: |
+        variables.data = wdk.json(getNews.outputs.body).collect {
+          [ headline: it.headline, url: it.url ]
+        }
+
+  - send-message:
+      id: report
+      content: |
+        <#assign data = ${variables.data}>
+        <ul>
+          <#list data as entry>
+            <li><a href="\${entry.url}">\${entry.headline}</a></li>
+          </#list>
+        </ul>

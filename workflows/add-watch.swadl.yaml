@@ -1,6 +1,6 @@
 id: add-watch
 variables:
-  uri: https://www.alphavantage.co/query?function=OVERVIEW
+  uri: https://api.iex.cloud/v1/data/core/quote/
   token:
 activities:
   - execute-script:
@@ -11,7 +11,7 @@ activities:
       script: |
         variables.ticker = event.args.ticker.toUpperCase()
         watchlist = System.properties[event.initiator.user.userId] ?: []
-        variables.proceed = watchlist.findAll { it.ticker == variables.ticker }.size() == 0
+        variables.proceed = watchlist.findAll { it == variables.ticker }.size() == 0
 
   - send-message:
       id: duplicate
@@ -27,25 +27,34 @@ activities:
         activity-completed:
           activity-id: init
           if: ${variables.proceed}
-      url: ${variables.uri}&apikey=${variables.token}&symbol=${variables.ticker}
+      url: ${variables.uri}${variables.ticker}?token=${variables.token}
 
   - execute-script:
       id: process
       script: |
-        if (check.outputs.body.Name) {
+        variables.data = wdk.json(check.outputs.body)[0]
+        if (variables.data.companyName) {
           userId = event.initiator.user.userId
           watchlist = System.properties[userId] ?: []
-          watchlist.add([ name: check.outputs.body.Name, ticker: variables.ticker ])
+          watchlist.add(variables.ticker)
           System.properties[userId] = watchlist
         }
 
   - send-message:
-      id: ack
+      id: ackSuccess
+      on:
+        activity-completed:
+          activity-id: process
+          if: ${variables.data.companyName != null}
       content: |
-        <#assign data = ${check.outputs.body}>
         Hi <mention uid="${event.initiator.user.userId}"/>,
-        <#if data.Name??>
-          added <b>\${data.Name}</b> (<cash tag="${variables.ticker}"/>) to your watchlist
-        <#else>
-          no security found for ticker <cash tag="${variables.ticker}"/>
-        </#if>
+        added <b>${variables.data.companyName}</b> (<cash tag="${variables.ticker}"/>) to your watchlist
+
+  - send-message:
+      id: ackFail
+      on:
+        activity-completed:
+          activity-id: process
+      content: |
+        Hi <mention uid="${event.initiator.user.userId}"/>,
+        no security found for ticker <cash tag="${variables.ticker}"/>

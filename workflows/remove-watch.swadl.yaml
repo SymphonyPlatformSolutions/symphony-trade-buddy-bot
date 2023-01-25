@@ -7,7 +7,7 @@ activities:
           content: /unwatch \${ticker}
       script: |
         userId = event.initiator.user.userId
-        System.properties[userId] = System.properties[userId].findAll { it.ticker != event.args.ticker }
+        System.properties[userId] = System.properties[userId].findAll { it != event.args.ticker }
 
   - send-message:
       id: ack
