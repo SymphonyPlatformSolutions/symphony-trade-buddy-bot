@@ -12,7 +12,8 @@ COPY --from=0 /jre /jre
 WORKDIR /data/symphony
 COPY workflows workflows
 COPY workflow-bot-app.jar app.jar
+COPY application.yaml application.yaml
 ENTRYPOINT [ \
   "/bin/sh", "-c", \
-  "sed -i \"s/{{IEX_TOKEN}}/$TOKEN/g\" workflows/*.swadl.yaml && /jre/bin/java -jar app.jar" \
+  "sed -i \"s/{{IEX_TOKEN}}/$TOKEN/g\" workflows/*.swadl.yaml && /jre/bin/java -jar app.jar --spring.profiles.active=prod" \
 ]
