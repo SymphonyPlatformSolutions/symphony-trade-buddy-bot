@@ -25,10 +25,15 @@ activities:
 
   - execute-script:
       id: process
-      script: variables.data = wdk.json(getPrice.outputs.body)[0]
-
-  - debug:
-      object: ${variables.data}
+      script: |
+        data = wdk.json(getPrice.outputs.body)[0]
+        pattern = new java.text.DecimalFormat("#,###,###.##")
+        data.changePercent = pattern.format(100 * data.changePercent)
+        data.latestPrice = pattern.format(data.latestPrice)
+        data.week52Low = pattern.format(data.week52Low)
+        data.week52High = pattern.format(data.week52High)
+        data.avgTotalVolume = pattern.format(data.avgTotalVolume)
+        variables.data = data
 
   - send-message:
       id: report
@@ -39,3 +44,4 @@ activities:
           <tr><th>Volume</th><td>${variables.data.avgTotalVolume}</td></tr>
           <tr><th>52w Range</th><td>${variables.data.week52Low} - ${variables.data.week52High}</td></tr>
         </table></div>
+
