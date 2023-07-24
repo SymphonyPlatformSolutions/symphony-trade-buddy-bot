@@ -1,7 +1,6 @@
-id: watchlist
+id: buddy-watchlist
 variables:
-  uri: https://api.iex.cloud/v1/data/core/quote/
-  token: {{IEX_TOKEN}}
+    uri: http://api.marketstack.com/v1/intraday/latest?symbols=
 activities:
   - execute-script:
       id: init
@@ -9,7 +8,7 @@ activities:
         message-received:
           content: /watchlist
       script: |
-        variables.data = System.properties[event.initiator.user.userId] ?: []
+        variables.data = wdk.readShared('trade-buddy', event.initiator.user.email) ?: []
         variables.watchlist = variables.data.join(",")
 
   - send-message:
@@ -27,38 +26,47 @@ activities:
       on:
         activity-completed:
           activity-id: init
-      url: ${variables.uri}${variables.watchlist}?token=${variables.token}
+      url: ${variables.uri}${variables.watchlist}&access_key=${secret('marketstack')}
 
   - execute-script:
       id: process
       script: |
-        variables.data = wdk.json(getPrice.outputs.body).collect {
-          [ symbol: it.symbol, name: it.companyName, price: it.latestPrice, change: it.change ]
+        variables.data = getPrice.outputs.body.data.collect {
+          [
+            symbol: it.symbol,
+            name: wdk.readShared('trade-buddy', it.symbol.toUpperCase()),
+            price: it.last,
+            change: ((it.last-it.close)/100).round(1)
+          ]
         }.sort { it.symbol }
 
   - send-message:
       id: ack
-      content: |
-        <#assign data = ${variables.data}>
-        <b>Watchlist for <mention uid="${event.initiator.user.userId}"/></b>
-        <form id="trade-discuss" multi-submit="reset">
-          <table>
-            <tr>
-              <th>Ticker</th><th>Company</th><th>Price</th><th>Change</th><th>Discuss</th>
-            </tr>
-            <#list data as entry>
+      content:
+        template: |
+          <b>Watchlist for <mention uid="${event.initiator.user.userId}"/></b>
+          <form id="trade-discuss" multi-submit="reset">
+            <table>
               <tr>
-                <td><cash tag="\${entry.symbol}" /></td>
-                <td>\${entry.name}</td>
-                <td>\${entry.price}</td>
-                <td>\${entry.change}</td>
-                <td>
-                  <div style="display:none">
-                    <text-field name="\${entry.symbol}">\${entry.name}</text-field>
-                  </div>
-                  <button name="discuss-\${entry.symbol}">Discuss \${entry.symbol}</button>
-                </td>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Change</th>
+                <th>Discuss</th>
               </tr>
-            </#list>
-          </table>
-        </form>
+              <#list variables.data as entry>
+                <tr>
+                  <td><cash tag="\${entry.symbol}" /></td>
+                  <td>\${entry.name}</td>
+                  <td>\${entry.price}</td>
+                  <td>\${entry.change}%</td>
+                  <td>
+                    <div style="display:none">
+                      <text-field name="name">\${entry.name}</text-field>
+                    </div>
+                    <button name="discuss-\${entry.symbol}">Discuss \${entry.symbol}</button>
+                  </td>
+                </tr>
+              </#list>
+            </table>
+          </form>

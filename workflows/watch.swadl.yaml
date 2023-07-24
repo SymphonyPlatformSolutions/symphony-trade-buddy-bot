@@ -1,0 +1,74 @@
+id: watch
+variables:
+  uri: https://www.alphavantage.co/query?function=OVERVIEW&symbol=
+activities:
+  - execute-script:
+      id: init
+      on:
+        message-received:
+          content: /watch \${ticker}
+      script: |
+        variables.ticker = event.args.ticker.toUpperCase()
+        variables.proceed = true
+        variables.existing = wdk.readShared('trade-buddy', event.initiator.user.email) ?: []
+        if (variables.existing.size() > 0) {
+          variables.proceed = variables.existing.findAll { it == variables.ticker }.size() == 0
+        }
+        variables.name = wdk.readShared('trade-buddy', variables.ticker)
+
+  - send-message:
+      id: duplicate
+      on:
+        activity-completed:
+          activity-id: init
+          if: ${!variables.proceed}
+      content: The ticker <cash tag="${variables.ticker}"/> is already in your watchlist
+
+  - execute-request:
+      id: check
+      on:
+        activity-completed:
+          activity-id: init
+          if: ${variables.proceed && variables.name == null}
+      url: ${variables.uri}${variables.ticker}&apikey=${secret('alphavantage')}
+
+  - execute-script:
+      id: checkProcess
+      script: |
+        if (check.outputs.body.Name) {
+          variables.name = check.outputs.body.Name
+        }
+
+  - execute-script:
+      id: process
+      on:
+        one-of:
+          - activity-completed:
+              activity-id: init
+          - activity-completed:
+              activity-id: checkProcess
+      script: |
+        if (variables.name) {
+            variables.existing.add(variables.ticker)
+            wdk.writeShared('trade-buddy', event.initiator.user.email, variables.existing)
+            wdk.writeShared('trade-buddy', variables.ticker, variables.name)
+        }
+
+  - send-message:
+      id: ackSuccess
+      on:
+        activity-completed:
+          activity-id: process
+          if: ${variables.name != null}
+      content: |
+        Hi <mention uid="${event.initiator.user.userId}"/>,
+        I've added <b>${variables.name}</b> (<cash tag="${variables.ticker}"/>) to your watchlist
+
+  - send-message:
+      id: ackFail
+      on:
+        activity-completed:
+          activity-id: process
+      content: |
+        Hi <mention uid="${event.initiator.user.userId}"/>,
+        I can't find any security with the ticker <cash tag="${variables.ticker}"/>

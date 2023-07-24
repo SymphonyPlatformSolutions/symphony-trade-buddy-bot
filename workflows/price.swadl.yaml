@@ -1,7 +1,12 @@
 id: price
 variables:
-  uri: https://api.iex.cloud/v1/data/core/quote/
-  token: {{IEX_TOKEN}}
+  uri: https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=
+  chartConfig: {
+    type: "line",
+    options: { elements: { point: { radius: 0 } }, legend: { display: false } },
+    data: { datasets: [{ fill: false }] }
+  }
+
 activities:
   - get-room:
       id: init
@@ -20,28 +25,50 @@ activities:
       script: variables.ticker = (init.outputs.room.roomAttributes.name =~ /\$(\w+)/)[0][1]
 
   - execute-request:
-      id: getPrice
-      url: ${variables.uri}${variables.ticker}?token=${variables.token}
+      id: getTimeSeries
+      url: ${variables.uri}${variables.ticker}&apikey=${secret('alphavantage')}
 
   - execute-script:
       id: process
+      if: ${getTimeSeries.outputs.body['Time Series (Daily)'] != null}
       script: |
-        data = wdk.json(getPrice.outputs.body)[0]
+        chartLabels = []
+        chartData = []
+        timeSeries = getTimeSeries.outputs.body['Time Series (Daily)']
+        timeSeries.each { key, val ->
+          chartLabels.add(0, key)
+          chartData.add(0, val['4. close'])
+        }
+        variables.chartConfig.data.labels = chartLabels
+        variables.chartConfig.data.datasets[0].data = chartData
+        dataString = groovy.json.JsonOutput.toJson(variables.chartConfig)
+        variables.payload = java.net.URLEncoder.encode(dataString, "UTF-8")
+
         pattern = new java.text.DecimalFormat("#,###,###.##")
-        data.changePercent = pattern.format(100 * data.changePercent)
-        data.latestPrice = pattern.format(data.latestPrice)
-        data.week52Low = pattern.format(data.week52Low)
-        data.week52High = pattern.format(data.week52High)
-        data.avgTotalVolume = pattern.format(data.avgTotalVolume)
-        variables.data = data
+        def format(x) { return pattern.format(Float.parseFloat(x.replaceAll('%',''))) }
+        data = timeSeries[chartLabels[chartLabels.size() - 1]]
+        variables.data = [
+          price: format(data['4. close']),
+          low: format(data['3. low']),
+          high: format(data['2. high']),
+          volume: format(data['5. volume'])
+        ]
 
   - send-message:
       id: report
       content: |
         <div style="display:flex"><table>
-          <tr><th>Price</th><td>${variables.data.latestPrice}</td></tr>
-          <tr><th>Change</th><td>${variables.data.change} (${variables.data.changePercent}%)</td></tr>
-          <tr><th>Volume</th><td>${variables.data.avgTotalVolume}</td></tr>
-          <tr><th>52w Range</th><td>${variables.data.week52Low} - ${variables.data.week52High}</td></tr>
+          <tr><th style="padding-right:1rem">Instrument</th><td><cash tag="${variables.ticker}" /></td></tr>
+          <tr><th>Last Price</th><td>${variables.data.price}</td></tr>
+          <tr><th>Day Range</th><td>${variables.data.low} - ${variables.data.high}</td></tr>
+          <tr><th>Volume</th><td>${variables.data.volume}</td></tr>
         </table></div>
+        <img src="https://quickchart.io/chart?f=svg&amp;c=${variables.payload}" />
 
+  - send-message:
+      id: reportFail
+      on:
+        activity-completed:
+          activity-id: getTimeSeries
+          if: ${getTimeSeries.outputs.body['Time Series (Daily)'] == null}
+      content: Unable to get price for <cash tag="${event.args.ticker}" />

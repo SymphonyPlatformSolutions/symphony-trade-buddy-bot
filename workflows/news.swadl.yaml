@@ -1,7 +1,6 @@
 id: news
 variables:
-  uri: https://api.iex.cloud/v1/data/core/news/
-  token: {{IEX_TOKEN}}
+  uri: https://www.alphavantage.co/query?function=NEWS_SENTIMENT&limit=10&tickers=
 activities:
   - get-room:
       id: init
@@ -21,21 +20,21 @@ activities:
 
   - execute-request:
       id: getNews
-      url: ${variables.uri}${variables.ticker}?token=${variables.token}&last=5
+      url: ${variables.uri}${variables.ticker}&apikey=${secret('alphavantage')}
 
   - execute-script:
       id: process
       script: |
-        variables.data = wdk.json(getNews.outputs.body).collect {
-          [ headline: it.headline, url: it.url ]
+        variables.data = getNews.outputs.body.feed.take(10).collect {
+          [ title: it.title.replaceAll('&','&amp;'), url: it.url.replaceAll('&','&amp;') ]
         }
 
   - send-message:
       id: report
-      content: |
-        <#assign data = ${variables.data}>
-        <ul>
-          <#list data as entry>
-            <li><a href="\${entry.url}">\${entry.headline}</a></li>
-          </#list>
-        </ul>
+      content:
+        template: |
+          <ul>
+            <#list variables.data as entry>
+              <li><a href="\${entry.url}">\${entry.title}</a></li>
+            </#list>
+          </ul>

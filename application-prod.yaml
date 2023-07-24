@@ -1,0 +1,10 @@
+bdk:
+  host: develop2.symphony.com
+  bot:
+    username: trade-buddy
+    privateKey.path: rsa/privatekey.pem
+  app:
+    appId: trade-buddy
+    privateKey.path: rsa/privatekey.pem
+wdk:
+  loader.path: ./workflows

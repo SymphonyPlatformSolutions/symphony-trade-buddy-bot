@@ -1,6 +1,3 @@
 rsa
-build
-lib
-/*.jar
-.gradle
+data
 .idea
