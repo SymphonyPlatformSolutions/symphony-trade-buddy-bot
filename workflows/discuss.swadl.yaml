@@ -8,7 +8,7 @@ activities:
           form-id: trade-discuss
       script: |
         variables.ticker = event.source.formValues.action.substring(8)
-        variables.name = event.source.formValues[variables.ticker]
+        variables.name = event.source.formValues['name']
         roomName = "Trade: \$${variables.ticker} ${variables.name}"
         variables.roomName = roomName.substring(0, Math.min(roomName.length(), 50))
 
@@ -21,7 +21,9 @@ activities:
   - execute-script:
       id: process
       script: |
-        result = searchExistingRooms.outputs.rooms.rooms.findAll { it.roomAttributes.name.toLowerCase() == variables.roomName.toLowerCase() }
+        result = searchExistingRooms.outputs.rooms.rooms.findAll {
+          it.roomAttributes.name.toLowerCase() == variables.roomName.toLowerCase()
+        }
         variables.roomId = result.size() > 0 ? result[0].roomSystemInfo.id : null
 
   - create-room:

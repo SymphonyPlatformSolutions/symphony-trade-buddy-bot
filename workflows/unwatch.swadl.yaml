@@ -1,0 +1,27 @@
+id: unwatch
+activities:
+  - execute-script:
+      id: init
+      on:
+        message-received:
+          content: /unwatch \${ticker}
+      script: |
+        variables.ticker = event.args.ticker.toUpperCase()
+        watchlist = wdk.readShared('trade-buddy', event.initiator.user.email) ?: []
+        variables.found = (watchlist.findAll { it == variables.ticker }.size() == 1)
+        if (variables.found) {
+          watchlist = watchlist.findAll { it != variables.ticker }
+          wdk.writeShared('trade-buddy', event.initiator.user.email, watchlist)
+        }
+
+  - send-message:
+      id: ack
+      content:
+        template: |
+          Hi <mention uid="${event.initiator.user.userId}"/>,
+          the ticker (<cash tag="${event.args.ticker}"/>)
+          <#if variables.found>
+            has been removed from your watchlist
+          <#else>
+            is not present in your watchlist
+          </#if>
