@@ -62,7 +62,7 @@ activities:
                   <td>\${entry.change}%</td>
                   <td>
                     <div style="display:none">
-                      <text-field name="name">\${entry.name}</text-field>
+                      <text-field name="\${entry.symbol}">\${entry.name}</text-field>
                     </div>
                     <button name="discuss-\${entry.symbol}">Discuss \${entry.symbol}</button>
                   </td>

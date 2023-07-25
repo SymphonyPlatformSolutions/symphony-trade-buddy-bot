@@ -8,7 +8,7 @@ activities:
           form-id: trade-discuss
       script: |
         variables.ticker = event.source.formValues.action.substring(8)
-        variables.name = event.source.formValues['name']
+        variables.name = event.source.formValues[variables.ticker]
         roomName = "Trade: \$${variables.ticker} ${variables.name}"
         variables.roomName = roomName.substring(0, Math.min(roomName.length(), 50))
 
