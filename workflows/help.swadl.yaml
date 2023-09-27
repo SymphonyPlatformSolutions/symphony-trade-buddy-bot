@@ -1,0 +1,16 @@
+id: help
+activities:
+  - send-message:
+      id: init
+      on:
+        message-received:
+          content: /help
+      content: |
+        <h5>Commands</h5>
+        <ul>
+          <li><b>/watch $ticker</b>: Adds a ticker to your watchlist</li>
+          <li><b>/unwatch $ticker</b>: Removes a ticker to your watchlist</li>
+          <li><b>/watchlist</b>: Displays the current watchlist</li>
+          <li><b>/price</b>: Gets price history of ticker (only works in a trade room)</li>
+          <li><b>/news</b>: Gets news of a ticker (only works in a trade room)</li>
+        </ul>
